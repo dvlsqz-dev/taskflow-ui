@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectsStore } from '@/stores/projects'
+import { notifySuccess, notifyError } from '@/utils/notify'
 
 const route = useRoute()
 const router = useRouter()
@@ -37,9 +38,11 @@ async function handleSubmit() {
       description: description.value,
     })
 
+    notifySuccess('Proyecto actualizado')
     router.push(`/projects/${route.params.id}`)
   } catch (error) {
     errorMessage.value = 'No se pudo guardar los cambios'
+    notifyError('No se pudo guardar el proyecto')
   } finally {
     saving.value = false
   }
