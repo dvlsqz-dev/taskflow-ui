@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { extractFieldErrors, extractGeneralMessage } from '@/utils/errors'
 
 const router = useRouter()
 const route = useRoute()
@@ -12,6 +13,7 @@ const name = ref('')
 const email = ref('')
 const password = ref('')
 const password_confirmation = ref('')
+const fieldErrors = ref({})
 
 // Estado de la UI mientras se procesa el login
 const loading = ref(false)
@@ -19,15 +21,24 @@ const errorMessage = ref('')
 
 async function handleSubmit() {
   errorMessage.value = ''
+  fieldErrors.value = {}
   loading.value = true
 
   try {
-    await authStore.register({ name: name.value, email: email.value, password: password.value, password_confirmation: password_confirmation.value })
-
+    await authStore.register({
+      name: name.value,
+      email: email.value,
+      password: password.value,
+      password_confirmation: password_confirmation.value,
+    })
     const redirectPath = route.query.redirect || '/dashboard'
     router.push(redirectPath)
   } catch (error) {
-    errorMessage.value = 'Contraseña no coincide o correo ya registrado'
+    fieldErrors.value = extractFieldErrors(error)
+
+    if (Object.keys(fieldErrors.value).length === 0) {
+      errorMessage.value = extractGeneralMessage(error)
+    }
   } finally {
     loading.value = false
   }
@@ -48,6 +59,7 @@ async function handleSubmit() {
             required
             class="w-full border rounded px-3 py-2"
           />
+          <p v-if="fieldErrors.name" class="text-red-600 text-xs mt-1">{{ fieldErrors.name }}</p>
         </div>
 
         <div>
@@ -58,6 +70,7 @@ async function handleSubmit() {
             required
             class="w-full border rounded px-3 py-2"
           />
+          <p v-if="fieldErrors.email" class="text-red-600 text-xs mt-1">{{ fieldErrors.email }}</p>
         </div>
 
         <div>
@@ -68,6 +81,7 @@ async function handleSubmit() {
             required
             class="w-full border rounded px-3 py-2"
           />
+          <p v-if="fieldErrors.password" class="text-red-600 text-xs mt-1">{{ fieldErrors.password }}</p>
         </div>
 
         <div>
@@ -78,6 +92,7 @@ async function handleSubmit() {
             required
             class="w-full border rounded px-3 py-2"
           />
+          <p v-if="fieldErrors.password_confirmation" class="text-red-600 text-xs mt-1">{{ fieldErrors.password_confirmation }}</p>
         </div>
 
         <p v-if="errorMessage" class="text-red-600 text-sm">
