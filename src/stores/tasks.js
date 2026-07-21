@@ -9,11 +9,13 @@ export const useTasksStore = defineStore('tasks', {
   }),
 
   actions: {
-    async fetchTasks(projectId) {
+    async fetchTasks(projectId, filters = {}) {
       this.loading = true
       this.error = null
       try {
-        const response = await api.get(`/projects/${projectId}/tasks`)
+        const response = await api.get(`/projects/${projectId}/tasks`, {
+          params: filters, // axios convierte esto en ?status=todo&search=texto
+        })
         this.tasks = response.data.data
       } catch (error) {
         this.error = 'No se pudieron cargar las tareas'

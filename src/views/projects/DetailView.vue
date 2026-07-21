@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useProjectsStore } from '@/stores/projects'
@@ -16,10 +16,33 @@ const { currentProject, loading, error } = storeToRefs(projectsStore)
 const tasksStore = useTasksStore()
 const { tasks, loading: tasksLoading, error: tasksError } = storeToRefs(tasksStore)
 const taskFieldErrors = ref({})
+const filterStatus = ref('')
+const filterSearch = ref('')
+
+function loadTasks() {
+  tasksStore.fetchTasks(route.params.id, {
+    status: filterStatus.value || undefined,
+    search: filterSearch.value || undefined,
+  })
+}
+
 
 onMounted(() => {
   projectsStore.fetchProject(route.params.id)
-  tasksStore.fetchTasks(route.params.id)
+  loadTasks()
+})
+
+let searchTimeout = null
+
+watch(filterStatus, () => {
+  loadTasks()
+})
+
+watch(filterSearch, () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    loadTasks()
+  }, 400)
 })
 
 async function handleDeleteProject() {
@@ -150,6 +173,22 @@ async function handleDeleteTask(taskId) {
       </div>
 
       <!-- Sección de tareas -->
+       <div class="flex gap-3 mb-4 mt-5">
+          <select v-model="filterStatus" class="border rounded px-3 py-2 text-sm">
+            <option value="">Todos los estados</option>
+            <option value="todo">Registrada</option>
+            <option value="in_progress">En progreso</option>
+            <option value="done">Completada</option>
+          </select>
+
+          <input
+            v-model="filterSearch"
+            type="text"
+            placeholder="Buscar por título..."
+            class="border rounded px-3 py-2 text-sm flex-1"
+          />
+        </div>
+
       <div class="mt-10">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold">Tareas</h2>
