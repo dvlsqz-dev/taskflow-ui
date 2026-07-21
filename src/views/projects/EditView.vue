@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectsStore } from '@/stores/projects'
 import { notifySuccess, notifyError } from '@/utils/notify'
+import { extractFieldErrors, extractGeneralMessage } from '@/utils/errors'
 
 const route = useRoute()
 const router = useRouter()
@@ -10,6 +11,7 @@ const projectsStore = useProjectsStore()
 
 const name = ref('')
 const description = ref('')
+const fieldErrors = ref({})
 
 const loading = ref(true)
 const saving = ref(false)
@@ -30,6 +32,7 @@ onMounted(async () => {
 
 async function handleSubmit() {
   errorMessage.value = ''
+  fieldErrors.value = {}
   saving.value = true
 
   try {
@@ -41,7 +44,11 @@ async function handleSubmit() {
     notifySuccess('Proyecto actualizado')
     router.push(`/projects/${route.params.id}`)
   } catch (error) {
-    errorMessage.value = 'No se pudo guardar los cambios'
+    fieldErrors.value = extractFieldErrors(error)
+
+    if (Object.keys(fieldErrors.value).length === 0) {
+      errorMessage.value = extractGeneralMessage(error)
+    }
     notifyError('No se pudo guardar el proyecto')
   } finally {
     saving.value = false
@@ -64,6 +71,9 @@ async function handleSubmit() {
           required
           class="w-full border rounded px-3 py-2"
         />
+        <p v-if="fieldErrors.name" class="text-red-600 text-sm">
+          {{ fieldErrors.name }}
+        </p>
       </div>
 
       <div>
@@ -73,6 +83,9 @@ async function handleSubmit() {
           rows="4"
           class="w-full border rounded px-3 py-2"
         ></textarea>
+        <p v-if="fieldErrors.description" class="text-red-600 text-sm">
+          {{ fieldErrors.description }}
+        </p>
       </div>
 
       <p v-if="errorMessage" class="text-red-600 text-sm">

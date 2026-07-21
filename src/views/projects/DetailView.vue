@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useProjectsStore } from '@/stores/projects'
 import { useTasksStore } from '@/stores/tasks'
 import { confirmAction, notifySuccess, notifyError } from '@/utils/notify'
+import { extractFieldErrors, extractGeneralMessage } from '@/utils/errors'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,6 +15,7 @@ const { currentProject, loading, error } = storeToRefs(projectsStore)
 
 const tasksStore = useTasksStore()
 const { tasks, loading: tasksLoading, error: tasksError } = storeToRefs(tasksStore)
+const taskFieldErrors = ref({})
 
 onMounted(() => {
   projectsStore.fetchProject(route.params.id)
@@ -51,8 +53,10 @@ function openCreateModal() {
   taskStatus.value = ''
   taskDateLimit.value = ''
   taskError.value = ''
+  taskFieldErrors.value = {}
   showModal.value = true
 }
+
 
 function openEditModal(task) {
   editingTask.value = task
@@ -61,6 +65,7 @@ function openEditModal(task) {
   taskStatus.value = task.status
   taskDateLimit.value = task.date_limit
   taskError.value = ''
+  taskFieldErrors.value = {}
   showModal.value = true
 }
 
@@ -70,10 +75,16 @@ function closeModal() {
 
 async function handleTaskSubmit() {
   taskError.value = ''
+  taskFieldErrors.value = {}
   savingTask.value = true
 
   try {
-    const data = { title: taskTitle.value, description: taskDescription.value, status: taskStatus.value, date_limit: taskDateLimit.value }
+    const data = {
+      title: taskTitle.value,
+      description: taskDescription.value,
+      status: taskStatus.value,
+      date_limit: taskDateLimit.value,
+    }
 
     if (editingTask.value) {
       await tasksStore.updateTask(route.params.id, editingTask.value.id, data)
@@ -85,7 +96,11 @@ async function handleTaskSubmit() {
 
     closeModal()
   } catch (error) {
-    taskError.value = 'No se pudo guardar la tarea'
+    taskFieldErrors.value = extractFieldErrors(error)
+
+    if (Object.keys(taskFieldErrors.value).length === 0) {
+      taskError.value = extractGeneralMessage(error)
+    }
     notifyError('No se pudo guardar la tarea')
   } finally {
     savingTask.value = false
@@ -203,6 +218,7 @@ async function handleDeleteTask(taskId) {
               required
               class="w-full border rounded px-3 py-2"
             />
+            <p v-if="taskFieldErrors.title" class="text-red-600 text-xs mt-1">{{ taskFieldErrors.title }}</p>
           </div>
 
           <div>
@@ -212,6 +228,7 @@ async function handleDeleteTask(taskId) {
               rows="3"
               class="w-full border rounded px-3 py-2"
             ></textarea>
+            <p v-if="taskFieldErrors.description" class="text-red-600 text-xs mt-1">{{ taskFieldErrors.description }}</p>
           </div>
 
           <div>
@@ -224,8 +241,9 @@ async function handleDeleteTask(taskId) {
               <option value="">Selecciona un estado</option>
               <option value="todo">Registrada</option>
               <option value="in_progress">En progreso</option>
-              <option value="completed">Completada</option>
+              <option value="done">Completada</option>
             </select>
+            <p v-if="taskFieldErrors.status" class="text-red-600 text-xs mt-1">{{ taskFieldErrors.status }}</p>
           </div>
 
           <div>
@@ -235,6 +253,7 @@ async function handleDeleteTask(taskId) {
               type="date"
               class="w-full border rounded px-3 py-2"
             />
+            <p v-if="taskFieldErrors.date_limit" class="text-red-600 text-xs mt-1">{{ taskFieldErrors.date_limit }}</p>
           </div>
 
           <p v-if="taskError" class="text-red-600 text-sm">{{ taskError }}</p>

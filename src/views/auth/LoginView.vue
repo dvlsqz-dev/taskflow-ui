@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { extractFieldErrors, extractGeneralMessage } from '@/utils/errors'
+
 
 const router = useRouter()
 const route = useRoute()
@@ -10,6 +12,7 @@ const authStore = useAuthStore()
 // Variables reactivas para los campos del formulario
 const email = ref('')
 const password = ref('')
+const fieldErrors = ref({})
 
 // Estado de la UI mientras se procesa el login
 const loading = ref(false)
@@ -17,17 +20,19 @@ const errorMessage = ref('')
 
 async function handleSubmit() {
   errorMessage.value = ''
+  fieldErrors.value = {}
   loading.value = true
 
   try {
     await authStore.login(email.value, password.value)
-
-    // Si venías de un guard (ej. /login?redirect=/dashboard), regresa ahí.
-    // Si no, ve al dashboard por defecto.
     const redirectPath = route.query.redirect || '/dashboard'
     router.push(redirectPath)
   } catch (error) {
-    errorMessage.value = 'Correo o contraseña incorrectos'
+    fieldErrors.value = extractFieldErrors(error)
+
+    if (Object.keys(fieldErrors.value).length === 0) {
+      errorMessage.value = extractGeneralMessage(error)
+    }
   } finally {
     loading.value = false
   }
@@ -48,6 +53,7 @@ async function handleSubmit() {
             required
             class="w-full border rounded px-3 py-2"
           />
+           <p v-if="fieldErrors.email" class="text-red-600 text-xs mt-1">{{ fieldErrors.email }}</p>
         </div>
 
         <div>
@@ -58,6 +64,7 @@ async function handleSubmit() {
             required
             class="w-full border rounded px-3 py-2"
           />
+          <p v-if="fieldErrors.password" class="text-red-600 text-xs mt-1">{{ fieldErrors.password }}</p>
         </div>
 
         <p v-if="errorMessage" class="text-red-600 text-sm">
