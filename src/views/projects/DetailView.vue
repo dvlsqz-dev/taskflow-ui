@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useProjectsStore } from '@/stores/projects'
 import { useTasksStore } from '@/stores/tasks'
+import { confirmAction, notifySuccess, notifyError } from '@/utils/notify'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,14 +21,15 @@ onMounted(() => {
 })
 
 async function handleDeleteProject() {
-  const confirmed = confirm('¿Seguro que quieres eliminar este proyecto?')
+  const confirmed = await confirmAction('¿Seguro que quieres eliminar este proyecto?')
   if (!confirmed) return
 
   try {
     await projectsStore.deleteProject(route.params.id)
+    notifySuccess('Proyecto eliminado')
     router.push('/projects')
   } catch (error) {
-    alert('No se pudo eliminar el proyecto')
+    notifyError('No se pudo eliminar el proyecto')
   }
 }
 
@@ -75,26 +77,30 @@ async function handleTaskSubmit() {
 
     if (editingTask.value) {
       await tasksStore.updateTask(route.params.id, editingTask.value.id, data)
+      notifySuccess('Tarea actualizada')
     } else {
       await tasksStore.createTask(route.params.id, data)
+      notifySuccess('Tarea creada')
     }
 
     closeModal()
   } catch (error) {
     taskError.value = 'No se pudo guardar la tarea'
+    notifyError('No se pudo guardar la tarea')
   } finally {
     savingTask.value = false
   }
 }
 
 async function handleDeleteTask(taskId) {
-  const confirmed = confirm('¿Eliminar esta tarea?')
+  const confirmed = await confirmAction('¿Eliminar esta tarea?')
   if (!confirmed) return
 
   try {
     await tasksStore.deleteTask(route.params.id, taskId)
+    notifySuccess('Tarea eliminada')
   } catch (error) {
-    alert('No se pudo eliminar la tarea')
+    notifyError('No se pudo eliminar la tarea')
   }
 }
 </script>

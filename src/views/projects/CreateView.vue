@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectsStore } from '@/stores/projects'
+import { notifySuccess, notifyError } from '@/utils/notify'
 
 const router = useRouter()
 const projectsStore = useProjectsStore()
@@ -22,9 +23,11 @@ async function handleSubmit() {
       description: description.value,
     })
 
+    notifySuccess('Proyecto creado')
     router.push('/projects')
   } catch (error) {
     errorMessage.value = 'No se pudo crear el proyecto. Verifica los datos.'
+    notifyError('No se pudo crear el proyecto')
   } finally {
     loading.value = false
   }
