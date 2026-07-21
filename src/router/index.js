@@ -20,6 +20,30 @@ const routes = [
     component: () => import('../views/dashboard/DashboardView.vue'),
     meta: { requiresAuth: true }
   },
+  {
+    path: '/projects',
+    name: 'projects',
+    component: () => import('../views/projects/ListView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/projects/create',
+    name: 'projects.create',
+    component: () => import('../views/projects/CreateView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/projects/:id',
+    name: 'projects.show',
+    component: () => import('../views/projects/DetailView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/projects/:id/edit',
+    name: 'projects.edit',
+    component: () => import('../views/projects/EditView.vue'),
+    meta: { requiresAuth: true }
+  },
 ]
 
 const router = createRouter({
