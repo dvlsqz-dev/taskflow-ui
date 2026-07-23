@@ -79,5 +79,25 @@ export const useProjectsStore = defineStore('projects', {
         throw error
       }
     },
+
+    async exportReport(id, projectName) {
+      try {
+        const response = await api.get(`/projects/${id}/report`, {
+          responseType: 'blob',
+        })
+
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `proyecto-${projectName}.pdf`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
+      } catch (error) {
+        console.error('Error exporting report:', error)
+        throw error
+      }
+    },
   },
 })

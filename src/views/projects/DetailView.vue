@@ -141,6 +141,14 @@ async function handleDeleteTask(taskId) {
     notifyError('No se pudo eliminar la tarea')
   }
 }
+
+async function handleExportReport() {
+  try {
+    await projectsStore.exportReport(currentProject.value.id, currentProject.value.name)
+  } catch (error) {
+    notifyError('No se pudo generar el reporte')
+  }
+}
 </script>
 
 <template>
@@ -169,6 +177,13 @@ async function handleDeleteTask(taskId) {
           class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
         >
           Eliminar
+        </button>
+
+        <button
+          @click="handleExportReport"
+          class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800"
+        >
+          Exportar PDF
         </button>
       </div>
 
